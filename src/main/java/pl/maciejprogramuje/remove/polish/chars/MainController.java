@@ -1,10 +1,10 @@
 package pl.maciejprogramuje.remove.polish.chars;
 
-import javafx.beans.property.BooleanProperty;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.event.ActionEvent;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -12,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -50,5 +51,54 @@ public class MainController implements Initializable {
 
     public void handleStartButtonAction() {
         System.out.println("klik");
+
+        messageStringProperty.setValue("");
+        final String path = enterLinkStringProperty.getValue();
+        if (path.isEmpty()) {
+            messageStringProperty.setValue("Unknown path!");
+        } else {
+            spinnerVisibleProperty.setValue(true);
+            startButtonDisableProperty.setValue(true);
+
+            final Task<Void> task = new Task<Void>() {
+                @Override
+                protected Void call() {
+                    System.out.println("path=" + path);
+
+                    readNamesOfFiles(path);
+
+                    return null;
+                }
+            };
+
+            task.setOnSucceeded(event -> {
+                spinnerVisibleProperty.setValue(false);
+                startButtonDisableProperty.setValue(false);
+                messageStringProperty.setValue("Done");
+            });
+
+            Thread thread = new Thread(task);
+            thread.start();
+        }
+    }
+
+    public void readNamesOfFiles(String rootPath) {
+        File directory = new File(rootPath);
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (final File f : files) {
+                if (f.isFile()) {
+                    System.out.println(f.getName() + "," + f.getAbsolutePath() + "," + f.getParent());
+
+                    Platform.runLater(() -> messageStringProperty.setValue(f.getName()));
+                } else if (f.isDirectory()) {
+                    try {
+                        readNamesOfFiles(f.getAbsolutePath());
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        }
     }
 }
