@@ -3,7 +3,6 @@ package pl.maciejprogramuje.remove.polish.chars;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -34,6 +33,9 @@ public class MainController implements Initializable {
     private SimpleBooleanProperty startButtonDisableProperty;
     private SimpleStringProperty messageStringProperty;
 
+    private String polishChars = "żółćęśąźń";
+    private String arabicChars = "zolcesazn";
+
 
     public void initialize(URL location, ResourceBundle resources) {
         spinnerVisibleProperty = new SimpleBooleanProperty(false);
@@ -63,8 +65,6 @@ public class MainController implements Initializable {
             final Task<Void> task = new Task<Void>() {
                 @Override
                 protected Void call() {
-                    System.out.println("path=" + path);
-
                     readNamesOfFiles(path);
 
                     return null;
@@ -88,7 +88,19 @@ public class MainController implements Initializable {
         if (files != null) {
             for (final File f : files) {
                 if (f.isFile()) {
-                    System.out.println(f.getName() + "," + f.getAbsolutePath() + "," + f.getParent());
+                    String name = f.getName();
+                    String path = f.getParent();
+                    String pathWithName = f.getAbsolutePath();
+
+                    if(name.chars().anyMatch(c -> polishChars.chars().anyMatch(pc -> pc == c))) {
+                        System.out.println("BUUUUM->" + name);
+                    }
+
+                    //System.out.println(name + "," + path + "," + pathWithName);
+
+
+
+                    //f.renameTo(new File());
 
                     Platform.runLater(() -> messageStringProperty.setValue(f.getName()));
                 } else if (f.isDirectory()) {
