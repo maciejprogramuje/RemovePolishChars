@@ -13,7 +13,6 @@ import javafx.scene.control.TextField;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -34,8 +33,8 @@ public class MainController implements Initializable {
     private SimpleBooleanProperty startButtonDisableProperty;
     private SimpleStringProperty messageStringProperty;
 
-    private char[] polishChars = ("żółćęśąźńŻÓŁĆĘŚĄŹŃ").toCharArray();
-    private char[] arabicChars = ("zolcesaznZOLCESAZN").toCharArray();
+    private final char[] polishChars = ("żółćęśąźńŻÓŁĆĘŚĄŹŃ").toCharArray();
+    private final char[] arabicChars = ("zolcesaznZOLCESAZN").toCharArray();
 
     public void initialize(URL location, ResourceBundle resources) {
         spinnerVisibleProperty = new SimpleBooleanProperty(false);
@@ -49,8 +48,6 @@ public class MainController implements Initializable {
 
         messageStringProperty = new SimpleStringProperty("");
         messageLabel.textProperty().bind(messageStringProperty);
-
-
     }
 
     public void handleStartButtonAction() {
@@ -88,41 +85,42 @@ public class MainController implements Initializable {
         if (files != null) {
             for (final File f : files) {
                 if (f.isFile()) {
-                    //String name = f.getName();
-                    //char[] nameChars = name.toCharArray();
-                    //String path = f.getParent();
-                    String pathWithName = f.getAbsolutePath();
-
-                    String outputString = replacePolishChars(pathWithName);
-
-                    //f.renameTo(new File(path + "\\" + mName));
-                    //System.out.println("nowa sciezka=" + path + "\\" + mName);
+                    String outputString = replacePolishChars(f.getName());
                     if (outputString != null) {
-                        System.out.println("FILE nowa sciezka=" + outputString);
-                        f.renameTo(new File(outputString));
+                        renameDirOrFile(f, f.getParent() + "\\" + outputString);
                     }
 
                     Platform.runLater(() -> messageStringProperty.setValue(f.getName()));
                 } else if (f.isDirectory()) {
                     try {
-                        String absolutePath = f.getAbsolutePath();
-                        String outputString = replacePolishChars(absolutePath);
+                        readNamesOfFiles(f.getAbsolutePath());
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
 
-                        //f.renameTo(new File(path + "\\" + mName));
-                        //System.out.println("nowa sciezka=" + path + "\\" + mName);
+
+            for (final File f : files) {
+                if (f.isDirectory()) {
+                    try {
+                        String outputString = replacePolishChars(f.getAbsolutePath());
                         if (outputString != null) {
-                            System.out.println("DIR nowa sciezka=" + outputString);
-                            f.renameTo(new File(outputString));
+                            renameDirOrFile(f, outputString);
                         }
 
-
-                        readNamesOfFiles(absolutePath);
+                        readNamesOfFiles(f.getAbsolutePath());
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
                 }
             }
         }
+    }
+
+    private void renameDirOrFile(File fileToChange, String outputString) {
+        System.out.println("renamed=" + outputString);
+        fileToChange.renameTo(new File(outputString));
     }
 
     private String replacePolishChars(String inputString) {
