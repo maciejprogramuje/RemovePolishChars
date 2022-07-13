@@ -11,6 +11,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public class MainControllerUtils {
     private final Property<Boolean> spinnerVisibleProperty;
@@ -64,23 +68,33 @@ public class MainControllerUtils {
 
     public void readNamesOfFiles(String rootPath) throws IOException {
         File directory = new File(rootPath);
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (final File f : files) {
-                if (f.isFile()) {
-                    modifyFile(f, "<SLA>50000</SLA>", "<SLA>${#Project#maxResponseTime}</SLA>");
 
-                    Platform.runLater(() -> messageStringProperty.setValue(f.getName()));
-                } else if (f.isDirectory()) {
-                    readNamesOfFiles(f.getAbsolutePath());
-                }
+        File[] files = directory.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return !name.contains(".git");
+            }
+        });
+
+
+        assert files != null;
+        for (final File f : files) {
+            if (f.isFile()) {
+                modifyFile(f);
+
+                Platform.runLater(() -> messageStringProperty.setValue(f.getName()));
+            } else if (f.isDirectory()) {
+                readNamesOfFiles(f.getAbsolutePath());
             }
         }
     }
 
-    private void modifyFile(File file, String oldString, String newString) throws IOException {
+    private void modifyFile(File file) throws IOException {
         String data = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-        data = data.replace(oldString, newString);
+        System.out.println(file.getAbsolutePath());
+
+        data = data.replaceAll("<SLA>\\d+</SLA>", "<SLA>\\$\\{#Project#maxResponseTime\\}</SLA>");
+
         FileUtils.writeStringToFile(file, data, StandardCharsets.UTF_8);
     }
 }
