@@ -27,9 +27,6 @@ public class MainController implements Initializable {
     @FXML
     private Label messageLabel;
 
-    public static final char[] POLISH_CHARS = ("żółćęśąźńŻÓŁĆĘŚĄŹŃ").toCharArray();
-    public static final char[] ARABIC_CHARS = ("zolcesaznZOLCESAZN").toCharArray();
-
     MainControllerUtils mainControllerUtils;
 
     private Property<Boolean> spinnerVisibleProperty;

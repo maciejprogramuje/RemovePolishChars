@@ -3,11 +3,14 @@ package pl.maciejprogramuje.remove.polish.chars;
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.concurrent.Task;
+import org.apache.commons.io.FileUtils;
 
-import java.io.File;
-
-import static pl.maciejprogramuje.remove.polish.chars.MainController.ARABIC_CHARS;
-import static pl.maciejprogramuje.remove.polish.chars.MainController.POLISH_CHARS;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class MainControllerUtils {
     private final Property<Boolean> spinnerVisibleProperty;
@@ -37,7 +40,11 @@ public class MainControllerUtils {
             final Task<Void> task = new Task<Void>() {
                 @Override
                 protected Void call() {
-                    readNamesOfFiles(path);
+                    try {
+                        readNamesOfFiles(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
                     return null;
                 }
@@ -55,61 +62,26 @@ public class MainControllerUtils {
     }
 
 
-    public void readNamesOfFiles(String rootPath) {
+    public void readNamesOfFiles(String rootPath) throws IOException {
         File directory = new File(rootPath);
         File[] files = directory.listFiles();
         if (files != null) {
             for (final File f : files) {
                 if (f.isFile()) {
-                    String outputString = replacePolishChars(f.getName());
-                    if (outputString != null) {
-                        renameDirOrFile(f, f.getParent() + "\\" + outputString);
-                    }
+                    modifyFile(f, "<SLA>50000</SLA>", "<SLA>${#Project#maxResponseTime}</SLA>");
 
                     Platform.runLater(() -> messageStringProperty.setValue(f.getName()));
                 } else if (f.isDirectory()) {
-                    try {
-                        readNamesOfFiles(f.getAbsolutePath());
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
-                    }
-                }
-            }
-
-            for (final File f : files) {
-                if (f.isDirectory()) {
-                    try {
-                        String outputString = replacePolishChars(f.getAbsolutePath());
-                        if (outputString != null) {
-                            renameDirOrFile(f, outputString);
-                        }
-
-                        readNamesOfFiles(f.getAbsolutePath());
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
-                    }
+                    readNamesOfFiles(f.getAbsolutePath());
                 }
             }
         }
     }
 
-    private void renameDirOrFile(File fileToChange, String outputString) {
-        System.out.println("renamed=" + outputString);
-        fileToChange.renameTo(new File(outputString));
-    }
-
-    private String replacePolishChars(String inputString) {
-        char[] inputChars = inputString.toCharArray();
-
-        for (int i = 0; i < inputChars.length; i++) {
-            for (int j = 0; j < POLISH_CHARS.length; j++) {
-                if (inputChars[i] == POLISH_CHARS[j]) {
-                    inputChars[i] = ARABIC_CHARS[j];
-                    return new String(inputChars);
-                }
-            }
-        }
-
-        return null;
+    private void modifyFile(File file, String oldString, String newString) throws IOException {
+        String data = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+        data = data.replace(oldString, newString);
+        FileUtils.writeStringToFile(file, data, StandardCharsets.UTF_8);
     }
 }
+
